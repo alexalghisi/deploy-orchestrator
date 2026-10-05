@@ -10,7 +10,9 @@
     "seed": "tsx src/db/seed.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "schema": "tsx src/api/printSchema.ts"
+    "schema": "tsx src/api/printSchema.ts",
+    "bench:logs": "tsx bench/logs.ts",
+    "bench:deploys": "tsx bench/deploys.ts"
   },
   "devDependencies": {
     "@temporalio/testing": "^1.24.0",
