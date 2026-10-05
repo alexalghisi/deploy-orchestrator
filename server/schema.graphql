@@ -1,0 +1,156 @@
+"""ISO-8601 timestamp"""
+scalar DateTime
+
+type Deployment {
+  canCancel: Boolean!
+  canRollback: Boolean!
+  cancelRequested: Boolean!
+  commitMessage: String!
+  commitSha: String!
+  createdAt: DateTime!
+  environment: Environment!
+  events: [DeploymentEvent!]!
+  failureReason: String
+  finishedAt: DateTime
+  id: ID!
+  image: String
+  isRollback: Boolean!
+
+  """Oldest first. Pass endCursor back as `after` to continue."""
+  logs(after: String, first: Int = 500): LogConnection!
+  rollbackOf: Deployment
+  service: Service!
+  status: DeploymentStatus!
+  updatedAt: DateTime!
+}
+
+type DeploymentConnection {
+  endCursor: String
+  hasNextPage: Boolean!
+  nodes: [Deployment!]!
+}
+
+type DeploymentEvent {
+  at: DateTime!
+  from: DeploymentStatus
+  id: ID!
+  to: DeploymentStatus!
+}
+
+enum DeploymentStatus {
+  ACTIVE
+  BUILDING
+  CANCELLED
+  DEPLOYING
+  FAILED
+  QUEUED
+  REMOVED
+}
+
+type Environment {
+  id: ID!
+  name: String!
+}
+
+enum FaultKind {
+  fatal
+  hang
+  transient
+}
+
+enum FaultTarget {
+  build
+  healthcheck
+  provision
+  push
+}
+
+type LogBatch {
+  cursor: String!
+  lines: [LogLine!]!
+}
+
+type LogConnection {
+  endCursor: String
+  hasMore: Boolean!
+  lines: [LogLine!]!
+}
+
+enum LogLevel {
+  error
+  info
+  warn
+}
+
+type LogLine {
+  level: LogLevel!
+  message: String!
+
+  """Monotonic within a deployment; also the pagination cursor."""
+  seq: String!
+  stream: LogStream!
+  ts: DateTime!
+}
+
+enum LogStream {
+  build
+  deploy
+}
+
+type Mutation {
+  """
+  Requests cancellation. The deployment becomes CANCELLED once anything it provisioned is cleaned up.
+  """
+  cancelDeployment(id: ID!): Deployment!
+
+  """
+  Queues a deployment. A newer deployment for the same service and environment supersedes it.
+  """
+  deployService(
+    """Defaults to the head of the default branch."""
+    commitSha: String
+    environmentId: ID!
+    serviceId: ID!
+  ): Deployment!
+
+  """Demo only: make the next call(s) to a fake service fail."""
+  injectFault(kind: FaultKind!, target: FaultTarget!, times: Int = 1): Boolean!
+
+  """
+  Creates a new deployment that runs the image of an earlier, previously live deployment.
+  """
+  rollback(to: ID!): Deployment!
+}
+
+type Project {
+  environments: [Environment!]!
+  id: ID!
+  name: String!
+  services: [Service!]!
+}
+
+type Query {
+  deployment(id: ID!): Deployment
+  project(id: ID!): Project
+  projects: [Project!]!
+  service(id: ID!): Service
+}
+
+type Service {
+  """Newest first."""
+  deployments(after: String, environmentId: ID!, first: Int = 20): DeploymentConnection!
+  id: ID!
+  latestDeployment(environmentId: ID!): Deployment
+  name: String!
+  repo: String!
+}
+
+type Subscription {
+  """
+  History after `after` (or from the start) in pages, then new lines as they are written.
+  """
+  deploymentLogs(after: String, deploymentId: ID!): LogBatch!
+
+  """Every change to a deployment in one environment of a project."""
+  deploymentUpdated(environmentId: ID!, projectId: ID!): Deployment!
+}
