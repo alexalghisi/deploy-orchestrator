@@ -56,3 +56,11 @@ export function createLoaders(catalog: PgCatalogRepository, deployments: PgDeplo
 }
 
 export type Loaders = ReturnType<typeof createLoaders>;
+
+/**
+ * A subscription keeps one context for its whole life, so its loaders would
+ * serve the first event's data forever. Cleared before each event.
+ */
+export function clearLoaders(loaders: Loaders): void {
+  for (const loader of Object.values(loaders)) loader.clearAll();
+}
