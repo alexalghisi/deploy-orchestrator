@@ -2,7 +2,7 @@
  * ClickHouse log store: bulk ingest throughput, and how keyset pagination
  * compares to OFFSET when reading the end of a very long log.
  *
- *   npm run bench:logs            (CLICKHOUSE_URL, default http://localhost:8124)
+ *   npm run bench:logs            (CLICKHOUSE_URL, default http://localhost:8123)
  */
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
@@ -11,7 +11,7 @@ import { ClickHouseLogStore } from '../src/logs/clickhouseLogStore.js';
 import { LogSequence } from '../src/logs/sequence.js';
 import { summary } from './stats.js';
 
-const url = process.env.CLICKHOUSE_URL ?? 'http://localhost:8124';
+const url = process.env.CLICKHOUSE_URL ?? 'http://localhost:8123';
 const LINES = Number(process.env.LINES ?? 1_000_000);
 const NOISE_DEPLOYMENTS = 20;
 const BATCH = 10_000;

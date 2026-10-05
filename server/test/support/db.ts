@@ -3,7 +3,7 @@ import pg from 'pg';
 import { migrate } from '../../src/db/migrate.js';
 import type { Pool } from '../../src/db/pool.js';
 
-const TEST_URL = process.env.TEST_DATABASE_URL ?? 'postgres://synckit:synckit@localhost:5432/deployorch_test';
+const TEST_URL = process.env.TEST_DATABASE_URL ?? 'postgres://postgres:postgres@localhost:5432/deployorch_test';
 
 export interface TestDb {
   pool: Pool;
