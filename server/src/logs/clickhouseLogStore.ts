@@ -1,5 +1,5 @@
 import { createClient, type ClickHouseClient } from '@clickhouse/client';
-import { LOG_LEVELS, LOG_STREAMS, type LogLevel, type LogLine, type LogPage, type LogStore, type LogStream } from '../domain/logs.js';
+import { LOG_LEVELS, LOG_STREAMS, type LogLine, type LogPage, type LogStore } from '../domain/logs.js';
 
 interface Row {
   deployment_id: string;
@@ -111,5 +111,3 @@ function toLogLine(row: Row): LogLine {
 function oneOf<T extends string>(allowed: readonly T[], value: string, fallback: T): T {
   return (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
 }
-
-export type { LogLevel, LogStream };
