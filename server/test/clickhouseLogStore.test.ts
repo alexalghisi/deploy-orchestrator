@@ -4,7 +4,7 @@ import type { LogLine } from '../src/domain/logs.js';
 import { ClickHouseLogStore } from '../src/logs/clickhouseLogStore.js';
 import { LogSequence } from '../src/logs/sequence.js';
 
-const url = process.env.CLICKHOUSE_URL ?? 'http://localhost:8124';
+const url = process.env.CLICKHOUSE_URL ?? 'http://localhost:8123';
 let store: ClickHouseLogStore;
 
 beforeAll(async () => {
