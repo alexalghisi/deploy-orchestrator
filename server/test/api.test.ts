@@ -261,9 +261,9 @@ describe('rollback', () => {
 describe('subscriptions', () => {
   it('streams status changes for the project environment over SSE', async () => {
     const abort = new AbortController();
-    const stream = subscribe<{ deploymentUpdated: { id: string; status: string } }>(
+    const stream = subscribe<{ deploymentUpdated: { id: string; status: string; events: { to: string }[] } }>(
       yoga,
-      `subscription ($p: ID!, $e: ID!) { deploymentUpdated(projectId: $p, environmentId: $e) { id status } }`,
+      `subscription ($p: ID!, $e: ID!) { deploymentUpdated(projectId: $p, environmentId: $e) { id status events { to } } }`,
       { p: fx.project.id, e: fx.production.id },
       abort.signal,
     );
@@ -274,9 +274,10 @@ describe('subscriptions', () => {
     await repo.transition(d.id, 'BUILDING');
 
     const seen = [await firstEvent, await nextData(stream)].map((e) => e.deploymentUpdated);
+    // the second event must not be served from the first one's dataloader cache
     expect(seen).toEqual([
-      { id: d.id, status: 'QUEUED' },
-      { id: d.id, status: 'BUILDING' },
+      { id: d.id, status: 'QUEUED', events: [{ to: 'QUEUED' }] },
+      { id: d.id, status: 'BUILDING', events: [{ to: 'QUEUED' }, { to: 'BUILDING' }] },
     ]);
     abort.abort();
   });
