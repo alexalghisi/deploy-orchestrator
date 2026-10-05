@@ -44,7 +44,7 @@ export async function laneWorkflow(input: LaneInput): Promise<void> {
   const requestCancel = async (target: Running, reason: string): Promise<void> => {
     if (target.cancelReason) return;
     target.cancelReason = reason;
-    await target.handle?.signal(cancelSignal, { reason });
+    if (target.handle) await sendCancel(target.handle, reason);
   };
 
   setHandler(enqueueSignal, async (job) => {
@@ -83,7 +83,7 @@ export async function laneWorkflow(input: LaneInput): Promise<void> {
     try {
       current.handle = await startJob(job);
       // a cancel that arrived while the child was starting
-      if (current.cancelReason) await current.handle.signal(cancelSignal, { reason: current.cancelReason });
+      if (current.cancelReason) await sendCancel(current.handle, current.cancelReason);
       await current.handle.result();
     } catch (err) {
       log.error('deployment workflow failed unexpectedly', { deploymentId: job.input.deploymentId, error: String(err) });
@@ -106,4 +106,18 @@ function startJob(job: LaneJob): Promise<ChildWorkflowHandle<PipelineWorkflow>> 
   return job.kind === 'deploy'
     ? startChild(deployWorkflow, { ...options, args: [job.input] })
     : startChild(rollbackWorkflow, { ...options, args: [job.input] });
+}
+
+/**
+ * The child may already have finished: it can go ACTIVE and complete in the
+ * same moment a newer deploy arrives, before the lane has seen the result.
+ * Signalling a closed workflow fails, and an error escaping a signal handler
+ * would fail the lane's workflow task over and over, so it is swallowed here.
+ */
+async function sendCancel(handle: ChildWorkflowHandle<PipelineWorkflow>, reason: string): Promise<void> {
+  try {
+    await handle.signal(cancelSignal, { reason });
+  } catch (err) {
+    log.info('deployment finished before it could be cancelled', { workflowId: handle.workflowId, error: String(err) });
+  }
 }
