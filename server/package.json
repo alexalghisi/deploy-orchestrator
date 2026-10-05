@@ -9,7 +9,8 @@
     "migrate": "tsx src/db/migrate.ts",
     "seed": "tsx src/db/seed.ts",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "schema": "tsx src/api/printSchema.ts"
   },
   "devDependencies": {
     "@temporalio/testing": "^1.24.0",
@@ -21,11 +22,15 @@
   },
   "dependencies": {
     "@clickhouse/client": "^1.23.1",
+    "@pothos/core": "^4.15.1",
     "@temporalio/activity": "^1.24.0",
     "@temporalio/client": "^1.24.0",
     "@temporalio/common": "^1.24.0",
     "@temporalio/worker": "^1.24.0",
     "@temporalio/workflow": "^1.24.0",
+    "dataloader": "^2.2.3",
+    "graphql": "^16.14.2",
+    "graphql-yoga": "^5.24.1",
     "pg": "^8.23.1"
   }
 }
