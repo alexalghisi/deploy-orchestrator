@@ -11,8 +11,8 @@ function intEnv(name: string, fallback: number): number {
 }
 
 export const config = {
-  databaseUrl: env('DATABASE_URL', 'postgres://synckit:synckit@localhost:5432/deployorch_dev'),
-  clickhouseUrl: env('CLICKHOUSE_URL', 'http://localhost:8124'),
+  databaseUrl: env('DATABASE_URL', 'postgres://postgres:postgres@localhost:5432/deployorch_dev'),
+  clickhouseUrl: env('CLICKHOUSE_URL', 'http://localhost:8123'),
   clickhouseDatabase: env('CLICKHOUSE_DATABASE', 'deployorch'),
   temporalAddress: env('TEMPORAL_ADDRESS', 'localhost:7233'),
   temporalNamespace: env('TEMPORAL_NAMESPACE', 'default'),
