@@ -2,6 +2,7 @@ import type { Deployment } from '../../domain/types.js';
 import type { DeploymentChanged } from '../../events/bus.js';
 import { tailLogs } from '../../logs/tailLogs.js';
 import type { Context } from '../context.js';
+import { clearLoaders } from '../loaders.js';
 import { builder } from '../builder.js';
 import { DeploymentRef } from './deployment.js';
 import { LogBatchRef } from './logs.js';
@@ -15,6 +16,7 @@ async function* deploymentUpdates(
     for await (const event of events) {
       if (!matches(event)) continue;
       // the event is a pointer; read the row so clients always get a complete, current deployment
+      clearLoaders(ctx.loaders);
       const deployment = await ctx.deployments.find(event.id);
       if (deployment) yield deployment;
     }
