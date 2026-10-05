@@ -52,12 +52,13 @@ describe('BufferedLogSink', () => {
     expect((await store.page('d1', { after: null, limit: 100 })).endCursor).toBe(event?.seq);
   });
 
-  it('flushes on its own once the batch is full', async () => {
+  it('flushes on its own once the batch is full, and sends what piles up meanwhile as one insert', async () => {
     const store = new CountingStore();
     const sink = new BufferedLogSink(store, new InMemoryEventBus(), { maxBatch: 3, intervalMs: 1_000 });
     for (let i = 0; i < 7; i++) sink.write('d1', 'build', 'info', `${i}`);
     await sink.flush();
-    expect(store.inserts).toEqual([3, 3, 1]);
+    expect(store.inserts).toEqual([3, 4]);
+    expect((await store.page('d1', { limit: 10 })).lines.map((l) => l.message)).toEqual(['0', '1', '2', '3', '4', '5', '6']);
   });
 });
 

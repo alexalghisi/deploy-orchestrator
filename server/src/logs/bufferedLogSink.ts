@@ -20,7 +20,7 @@ export interface BufferedLogSinkOptions {
 export class BufferedLogSink implements LogSink {
   private buffer: LogLine[] = [];
   private timer: NodeJS.Timeout | null = null;
-  private inflight: Promise<void> = Promise.resolve();
+  private draining: Promise<void> | null = null;
   private readonly maxBatch: number;
   private readonly intervalMs: number;
   private readonly sequence: LogSequence;
@@ -43,15 +43,27 @@ export class BufferedLogSink implements LogSink {
     else this.timer ??= setTimeout(() => void this.flush().catch(() => {}), this.intervalMs);
   }
 
+  /** Resolves once everything written so far is stored and announced. */
   flush(): Promise<void> {
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
-    const batch = this.buffer;
-    this.buffer = [];
-    // chained so batches land, and are announced, in the order they were written
-    const next = this.inflight.then(() => this.persist(batch));
-    this.inflight = next.catch(() => {});
-    return next;
+    this.draining ??= this.drain().finally(() => {
+      this.draining = null;
+    });
+    return this.draining;
+  }
+
+  /**
+   * One insert at a time, each taking everything buffered so far. While an
+   * insert is in flight new lines pile up and go out together in the next
+   * one, so a slow insert produces bigger batches instead of a queue.
+   */
+  private async drain(): Promise<void> {
+    while (this.buffer.length > 0) {
+      const batch = this.buffer;
+      this.buffer = [];
+      await this.persist(batch);
+    }
   }
 
   private async persist(batch: LogLine[]): Promise<void> {
